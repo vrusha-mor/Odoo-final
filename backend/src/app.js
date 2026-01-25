@@ -22,5 +22,6 @@ app.use("/categories", categoryRoutes);
 const tableRoutes = require("./routes/table.routes");
 app.use("/tables", tableRoutes);
 app.use("/dashboard", require("./routes/dashboard.routes"));
+app.use("/voice-booking", require("./routes/voice.routes"));
 
 module.exports = app;

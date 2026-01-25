@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingCart, Package, CreditCard, LayoutGrid, Trash2, Calculator, Send, Search, Star, Plus, Minus, Menu } from 'lucide-react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import PaymentModal from './PaymentModal';
+import PaymentModal from './payment/PaymentModal';
 import Navbar from './Navbar';
 
 // Assets

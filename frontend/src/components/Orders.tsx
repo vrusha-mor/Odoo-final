@@ -35,7 +35,7 @@ export default function Orders() {
         date: new Date(o.dates || o.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
         total: parseFloat(o.total_amount) || 0,
         customer: o.customer_name || 'Walk-in',
-        status: o.status === 'Paid' ? 'Paid' : 'Draft',
+        status: (o.status === 'Paid' || o.status === 'completed') ? 'Paid' : 'Draft',
         items: [] // Will fetch on details
       }));
       
@@ -61,9 +61,9 @@ export default function Orders() {
       const detailedOrder: Order = {
         ...order,
         items: res.data.items.map((item: any) => ({
-          name: item.product_name || 'Product',
+          name: item.product_name || item.name || 'Product',
           qty: item.quantity || 1,
-          amount: parseFloat(item.unit_price || item.total_price / item.quantity) || 0,
+          amount: parseFloat(item.price || item.unit_price || 0),
           tax: '5%',
           uom: 'Unit'
         }))
@@ -81,10 +81,25 @@ export default function Orders() {
     );
   };
 
-  const updateStatus = (id: string, status: 'Draft' | 'Paid') => {
+  const updateStatus = async (id: string, status: 'Draft' | 'Paid') => {
+    // Optimistic UI update
+    const dbStatus = status === 'Paid' ? 'completed' : 'pending';
+    
     setOrders(prev => prev.map(o => o.id === id ? { ...o, status } : o));
     if (activeOrder?.id === id) {
       setActiveOrder(prev => prev ? { ...prev, status } : null);
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      await axios.patch(`http://localhost:3001/orders/${id}/status`, {
+        status: dbStatus 
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+    } catch (err) {
+      console.error("Failed to update status", err);
+      // Revert if needed (omitted for brevity)
     }
   };
 
@@ -101,12 +116,12 @@ export default function Orders() {
   };
 
   return (
-    <div style={{ minHeight: '100vh' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--background)' }}>
       <Navbar />
       
       <div style={{ padding: '40px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-            <h1 style={{ fontSize: '2rem', fontWeight: '700' }}>Orders</h1>
+            <h1 style={{ fontSize: '2rem', fontWeight: '700', color: 'var(--text-main)' }}>Orders</h1>
             
             {selectedOrders.length > 0 && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
@@ -125,17 +140,17 @@ export default function Orders() {
 
         <div className="glass-card table-card" style={{ padding: '0', overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid var(--surface-border)' }}>
+                <thead style={{ background: 'rgba(0,0,0,0.02)', borderBottom: '1px solid var(--surface-border)' }}>
                     <tr>
                         <th style={{ padding: '20px', textAlign: 'left', width: '50px' }}>
                              <input type="checkbox" onChange={(e) => setSelectedOrders(e.target.checked ? orders.map((o: Order) => o.id) : [])} />
                         </th>
-                        <th style={{ padding: '20px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: '500' }}>Order No</th>
-                        <th style={{ padding: '20px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: '500' }}>Session</th>
-                        <th style={{ padding: '20px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: '500' }}>Date</th>
-                        <th style={{ padding: '20px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: '500' }}>Total</th>
-                        <th style={{ padding: '20px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: '500' }}>Customer</th>
-                        <th style={{ padding: '20px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: '500' }}>Status</th>
+                        <th style={{ padding: '20px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: '600' }}>Order No</th>
+                        <th style={{ padding: '20px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: '600' }}>Session</th>
+                        <th style={{ padding: '20px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: '600' }}>Date</th>
+                        <th style={{ padding: '20px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: '600' }}>Total</th>
+                        <th style={{ padding: '20px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: '600' }}>Customer</th>
+                        <th style={{ padding: '20px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: '600' }}>Status</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -148,7 +163,7 @@ export default function Orders() {
                             key={order.id} 
                             onClick={() => fetchOrderDetails(order)}
                             style={{ borderBottom: '1px solid var(--surface-border)', cursor: 'pointer', transition: 'background 0.2s' }}
-                            onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.02)')}
+                            onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(0,0,0,0.02)')}
                             onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                         >
                             <td style={{ padding: '20px' }} onClick={(e) => e.stopPropagation()}>
@@ -161,7 +176,7 @@ export default function Orders() {
                             <td style={{ padding: '20px', fontWeight: '600' }}>{order.orderNo}</td>
                             <td style={{ padding: '20px' }}>{order.session}</td>
                             <td style={{ padding: '20px' }}>{order.date}</td>
-                            <td style={{ padding: '20px', fontWeight: '700' }} className="text-gradient">₹{order.total}</td>
+                            <td style={{ padding: '20px', fontWeight: '700', color: 'var(--text-main)' }}>₹{order.total.toFixed(2)}</td>
                             <td style={{ padding: '20px' }}>{order.customer}</td>
                             <td style={{ padding: '20px' }}>
                                 <span style={{ 
@@ -169,9 +184,9 @@ export default function Orders() {
                                     borderRadius: '8px', 
                                     fontSize: '0.75rem', 
                                     fontWeight: '700',
-                                    background: order.status === 'Paid' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(99, 102, 241, 0.1)',
-                                    color: order.status === 'Paid' ? 'var(--success)' : 'var(--primary)',
-                                    border: `1px solid ${order.status === 'Paid' ? 'var(--success)' : 'var(--primary)'}44`
+                                    background: order.status === 'Paid' ? '#059669' : 'rgba(233, 30, 99, 0.1)', // Dark Green for Paid, Light Pink for Draft
+                                    color: order.status === 'Paid' ? 'white' : 'var(--primary)',
+                                    border: `1px solid ${order.status === 'Paid' ? '#059669' : 'var(--primary)44'}`
                                 }}>
                                     {order.status}
                                 </span>
@@ -186,30 +201,30 @@ export default function Orders() {
       {/* Order Detail View */}
       <AnimatePresence>
         {activeOrder && (
-          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(10px)', zIndex: 1000, display: 'flex', justifyContent: 'flex-end' }}>
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(5px)', zIndex: 1000, display: 'flex', justifyContent: 'flex-end' }}>
              <motion.div 
                 initial={{ x: '100%' }}
                 animate={{ x: 0 }}
                 exit={{ x: '100%' }}
                 transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                style={{ width: '100%', maxWidth: '900px', background: 'var(--background)', borderLeft: '1px solid var(--surface-border)', overflowY: 'auto' }}
+                style={{ width: '100%', maxWidth: '800px', background: 'var(--surface)', borderLeft: '1px solid var(--surface-border)', overflowY: 'auto', boxShadow: '-10px 0 50px rgba(0,0,0,0.1)' }}
              >
                 {/* Detail Header */}
                 <div style={{ padding: '30px 40px', borderBottom: '1px solid var(--surface-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--surface)' }}>
                     <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
                         <button onClick={() => setActiveOrder(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}><X size={24} /></button>
-                        <h2 style={{ fontSize: '1.5rem' }}>Order {activeOrder.orderNo}</h2>
+                        <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--text-main)' }}>Order {activeOrder.orderNo}</h2>
                     </div>
                     <div style={{ display: 'flex', gap: '10px' }}>
                         <button 
                             onClick={() => updateStatus(activeOrder.id, 'Draft')}
-                            style={{ padding: '8px 20px', borderRadius: '8px', background: activeOrder.status === 'Draft' ? 'var(--primary)' : 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', color: 'white', cursor: 'pointer' }}
+                            style={{ padding: '8px 20px', borderRadius: '8px', background: activeOrder.status === 'Draft' ? 'var(--primary)' : 'transparent', border: '1px solid var(--primary)', color: activeOrder.status === 'Draft' ? 'white' : 'var(--primary)', cursor: 'pointer', fontWeight: '600' }}
                         >
                             Draft
                         </button>
                         <button 
                             onClick={() => updateStatus(activeOrder.id, 'Paid')}
-                            style={{ padding: '8px 20px', borderRadius: '8px', background: activeOrder.status === 'Paid' ? 'var(--success)' : 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', color: 'white', cursor: 'pointer' }}
+                            style={{ padding: '8px 20px', borderRadius: '8px', background: activeOrder.status === 'Paid' ? '#059669' : 'transparent', border: '1px solid #059669', color: activeOrder.status === 'Paid' ? 'white' : '#059669', cursor: 'pointer', fontWeight: '600' }}
                         >
                             Paid
                         </button>
@@ -222,28 +237,28 @@ export default function Orders() {
                         <div style={{ display: 'grid', gap: '15px' }}>
                             <div>
                                 <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Order number</label>
-                                <p style={{ fontSize: '1.1rem', fontWeight: '500' }}>{activeOrder.orderNo}</p>
+                                <p style={{ fontSize: '1.1rem', fontWeight: '600', color: 'var(--text-main)' }}>{activeOrder.orderNo}</p>
                             </div>
                             <div>
                                 <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Date</label>
-                                <p style={{ fontSize: '1.1rem', fontWeight: '500' }}>{activeOrder.date}</p>
+                                <p style={{ fontSize: '1.1rem', fontWeight: '600', color: 'var(--text-main)' }}>{activeOrder.date}</p>
                             </div>
                         </div>
                         <div style={{ display: 'grid', gap: '15px' }}>
                             <div>
                                 <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Session</label>
-                                <p style={{ fontSize: '1.1rem', fontWeight: '500' }}>{activeOrder.session}</p>
+                                <p style={{ fontSize: '1.1rem', fontWeight: '600', color: 'var(--text-main)' }}>{activeOrder.session}</p>
                             </div>
                             <div>
                                 <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Customer</label>
-                                <p style={{ fontSize: '1.1rem', fontWeight: '500' }}>{activeOrder.customer}</p>
+                                <p style={{ fontSize: '1.1rem', fontWeight: '600', color: 'var(--text-main)' }}>{activeOrder.customer}</p>
                             </div>
                         </div>
                     </div>
 
                     <div style={{ marginBottom: '30px' }}>
                         <div style={{ display: 'flex', borderBottom: '1px solid var(--surface-border)' }}>
-                            <div style={{ padding: '10px 20px', borderBottom: '2px solid var(--primary)', color: 'var(--primary)', fontWeight: '600' }}>Product</div>
+                            <div style={{ padding: '10px 20px', borderBottom: '2px solid var(--primary)', color: 'var(--primary)', fontWeight: '700' }}>Product</div>
                             <div style={{ padding: '10px 20px', color: 'var(--text-muted)' }}>Extra Info</div>
                         </div>
                     </div>
@@ -251,25 +266,25 @@ export default function Orders() {
                     <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '40px' }}>
                         <thead style={{ borderBottom: '1px solid var(--surface-border)' }}>
                             <tr>
-                                <th style={{ padding: '15px 0', textAlign: 'left', color: 'var(--text-muted)', fontWeight: '500' }}>Product</th>
-                                <th style={{ padding: '15px 0', textAlign: 'right', color: 'var(--text-muted)', fontWeight: '500' }}>QTY</th>
-                                <th style={{ padding: '15px 0', textAlign: 'right', color: 'var(--text-muted)', fontWeight: '500' }}>Amount</th>
-                                <th style={{ padding: '15px 0', textAlign: 'right', color: 'var(--text-muted)', fontWeight: '500' }}>Tax</th>
-                                <th style={{ padding: '15px 0', textAlign: 'right', color: 'var(--text-muted)', fontWeight: '500' }}>UOM</th>
-                                <th style={{ padding: '15px 0', textAlign: 'right', color: 'var(--text-muted)', fontWeight: '500' }}>Sub-Total</th>
-                                <th style={{ padding: '15px 0', textAlign: 'right', color: 'var(--text-muted)', fontWeight: '500' }}>Total</th>
+                                <th style={{ padding: '15px 0', textAlign: 'left', color: 'var(--text-muted)', fontWeight: '600' }}>Product</th>
+                                <th style={{ padding: '15px 0', textAlign: 'right', color: 'var(--text-muted)', fontWeight: '600' }}>QTY</th>
+                                <th style={{ padding: '15px 0', textAlign: 'right', color: 'var(--text-muted)', fontWeight: '600' }}>Amount</th>
+                                <th style={{ padding: '15px 0', textAlign: 'right', color: 'var(--text-muted)', fontWeight: '600' }}>Tax</th>
+                                <th style={{ padding: '15px 0', textAlign: 'right', color: 'var(--text-muted)', fontWeight: '600' }}>UOM</th>
+                                <th style={{ padding: '15px 0', textAlign: 'right', color: 'var(--text-muted)', fontWeight: '600' }}>Sub-Total</th>
+                                <th style={{ padding: '15px 0', textAlign: 'right', color: 'var(--text-muted)', fontWeight: '600' }}>Total</th>
                             </tr>
                         </thead>
                         <tbody>
                             {activeOrder.items.map((item, idx) => (
-                                <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
-                                    <td style={{ padding: '15px 0', color: '#60a5fa' }}>{item.name} --&gt;</td>
+                                <tr key={idx} style={{ borderBottom: '1px solid var(--surface-border)' }}>
+                                    <td style={{ padding: '15px 0', color: '#3b82f6', fontWeight: '500' }}>{item.name} --&gt;</td>
                                     <td style={{ padding: '15px 0', textAlign: 'right' }}>{item.qty}</td>
-                                    <td style={{ padding: '15px 0', textAlign: 'right' }}>₹{item.amount}</td>
+                                    <td style={{ padding: '15px 0', textAlign: 'right' }}>₹{item.amount.toFixed(2)}</td>
                                     <td style={{ padding: '15px 0', textAlign: 'right' }}>{item.tax}</td>
                                     <td style={{ padding: '15px 0', textAlign: 'right' }}>{item.uom}</td>
-                                    <td style={{ padding: '15px 0', textAlign: 'right' }}>₹{item.qty * item.amount}</td>
-                                    <td style={{ padding: '15px 0', textAlign: 'right' }}>₹{(item.qty * item.amount * 1.05).toFixed(2)}</td>
+                                    <td style={{ padding: '15px 0', textAlign: 'right' }}>₹{(item.qty * item.amount).toFixed(2)}</td>
+                                    <td style={{ padding: '15px 0', textAlign: 'right', fontWeight: '600' }}>₹{((item.qty * item.amount) * 1.05).toFixed(2)}</td>
                                 </tr>
                             ))}
                         </tbody>
@@ -286,8 +301,8 @@ export default function Orders() {
                                 <span>₹{(activeOrder.total * 0.05).toFixed(2)}</span>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--surface-border)', paddingTop: '15px' }}>
-                                <span style={{ fontWeight: '600' }}>Final Total:</span>
-                                <span style={{ fontWeight: '700', fontSize: '1.4rem' }} className="text-gradient">₹{activeOrder.total.toFixed(2)}</span>
+                                <span style={{ fontWeight: '700', fontSize: '1.2rem' }}>Final Total:</span>
+                                <span style={{ fontWeight: '800', fontSize: '1.4rem', color: 'var(--primary)' }}>₹{activeOrder.total.toFixed(2)}</span>
                             </div>
                         </div>
                     </div>

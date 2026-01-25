@@ -32,7 +32,7 @@ export default function KitchenDisplay() {
     
     // Pagination
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 8;
+    const itemsPerPage = 12;
 
     useEffect(() => {
         fetchOrders();

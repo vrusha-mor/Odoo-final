@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, ChevronDown, DollarSign, CreditCard, QrCode } from 'lucide-react';
 import axios from 'axios';
-import Navbar from './Navbar';
+import Navbar from '../Navbar';
 
 type PaymentGroup = {
   method: string;

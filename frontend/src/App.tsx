@@ -11,8 +11,9 @@ import Products from './components/Products';
 import Categories from './components/Categories';
 import FloorPlan from './components/FloorPlan';
 import Orders from './components/Orders';
-import Payments from './components/Payments';
+import Payments from './components/payment/PaymentHistory';
 import Customers from './components/Customers';
+import VoiceBooking from './components/VoiceBooking';
 
 import './styles/app.css';
 
@@ -42,6 +43,20 @@ const ProtectedRoute = ({
 };
 
 /* ============================
+   ROLE BASED REDIRECT
+============================ */
+
+const RoleRedirect = () => {
+  const role = localStorage.getItem('role');
+
+  if (role === '2') return <Navigate to="/pos" replace />;       // Cashier
+  if (role === '1') return <Navigate to="/dashboard" replace />; // Admin
+  if (role === '3') return <Navigate to="/kitchen" replace />;   // Kitchen
+
+  return <Navigate to="/login" replace />;
+};
+
+/* ============================
    MAIN APP
 ============================ */
 
@@ -50,14 +65,11 @@ function App() {
     <Router>
       <Routes>
         {/* -------- PUBLIC ROUTES -------- */}
-        <Route path="/login" element={<Login />} /> {/* Kept login and signup as public */}
+        <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-        <Route path="/orders" element={<Orders />} /> {/* Moved Orders to public */}
-        <Route path="/kitchen" element={<KitchenDisplay />} /> {/* Added KitchenDisplay route */}
-        <Route path="/" element={<Navigate to="/login" />} /> {/* Changed default redirect */}
         <Route path="/verify-otp" element={<VerifyOtp />} />
 
-        {/* -------- ADMIN DASHBOARD -------- */}
+        {/* -------- ADMIN -------- */}
         <Route
           path="/dashboard"
           element={
@@ -82,20 +94,23 @@ function App() {
             </ProtectedRoute>
           }
         />
+
+        {/* -------- VOICE BOOKING (POS FEATURE) -------- */}
         <Route
-          path="/settings"
+          path="/voice-booking"
           element={
-            <ProtectedRoute allowedRoles={['1']}>
-              <Settings />
+            <ProtectedRoute allowedRoles={['1', '2']}>
+              <VoiceBooking />
             </ProtectedRoute>
-          }
-        />
+  }
+/>
+
 
         {/* -------- POS / CASHIER -------- */}
         <Route
           path="/pos"
           element={
-            <ProtectedRoute allowedRoles={['2']}>
+            <ProtectedRoute allowedRoles={['1', '2']}>
               <POS />
             </ProtectedRoute>
           }
@@ -133,23 +148,31 @@ function App() {
           }
         />
 
-        {/* -------- DEFAULT REDIRECT -------- */}
+        {/* -------- KITCHEN -------- */}
+        <Route
+          path="/kitchen"
+          element={
+            <ProtectedRoute allowedRoles={['1', '2', '3']}>
+              <KitchenDisplay />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* -------- SETTINGS -------- */}
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute allowedRoles={['1']}>
+              <Settings />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* -------- DEFAULT -------- */}
         <Route path="/" element={<RoleRedirect />} />
       </Routes>
     </Router>
   );
 }
-
-/* ============================
-   ROLE BASED REDIRECT
-============================ */
-
-const RoleRedirect = () => {
-  const role = localStorage.getItem('role');
-
-  if (role) return <Navigate to="/dashboard" replace />;
-
-  return <Navigate to="/login" replace />;
-};
 
 export default App;

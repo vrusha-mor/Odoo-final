@@ -5,7 +5,7 @@ import axios from 'axios';
 import '../styles/Auth.css';
 
 // Assets
-import pizzaLogo from '../assets/pizza_logo.png';
+import pizzaLogo from '../assets/logo.png';
 import pizzaBg from '../assets/auth_bg_custom.jpg';
 
 export default function Login() {

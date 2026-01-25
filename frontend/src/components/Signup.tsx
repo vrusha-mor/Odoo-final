@@ -4,7 +4,7 @@ import { Mail, Lock, Eye, EyeOff, UserPlus, CheckCircle, Circle, User } from 'lu
 import axios from 'axios';
 import '../styles/Auth.css';
 
-import pizzaLogo from '../assets/pizza_logo.png';
+import pizzaLogo from '../assets/logo.png';
 import pizzaBg from '../assets/auth_bg_custom.jpg';
 
 const API_BASE = "http://localhost:3001";

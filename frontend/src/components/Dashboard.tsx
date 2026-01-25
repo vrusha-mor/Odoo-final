@@ -69,7 +69,7 @@ export default function Dashboard() {
                         <div className="dropdown-menu" style={{ top: '35px', right: '0', left: 'auto', width: '200px', borderRadius: '12px', boxShadow: '0 5px 20px rgba(0,0,0,0.1)' }}>
                             <div className="dropdown-item" onClick={() => navigate('/settings')}><SettingsIcon size={16} style={{ marginRight: '10px' }} /> Settings</div>
                             <div className="dropdown-item" onClick={() => navigate('/kitchen')}><Monitor size={16} style={{ marginRight: '10px' }} /> Kitchen Display</div>
-                            <div className="dropdown-item"><Users size={16} style={{ marginRight: '10px' }} /> Customer Display</div>
+                            <div className="dropdown-item" onClick={() => navigate('/pos')}><Users size={16} style={{ marginRight: '10px' }} /> Customer Display</div>
                         </div>
                     )}
                   </div>

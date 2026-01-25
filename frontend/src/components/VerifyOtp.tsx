@@ -5,7 +5,7 @@ import { KeyRound, Facebook, Twitter, Chrome, ArrowLeft } from 'lucide-react';
 import '../styles/Auth.css';
 
 // Assets
-import pizzaLogo from '../assets/pizza_logo.png';
+import pizzaLogo from '../assets/logo.png';
 import pizzaBg from '../assets/auth_bg_custom.jpg';
 
 const API_BASE = "http://localhost:3001";

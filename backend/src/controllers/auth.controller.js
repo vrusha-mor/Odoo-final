@@ -27,6 +27,9 @@ exports.signup = async (req, res) => {
 
   } catch (err) {
     console.error(err);
+    if (err.code === '23505') {
+        return res.status(409).json({ message: 'Email already registered' });
+    }
     res.status(500).json({ message: 'Signup failed' });
   }
 };
