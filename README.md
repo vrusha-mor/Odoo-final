@@ -1,7 +1,7 @@
 # 🎤 Voice-Based Menu Booking & POS System
 
 **Drive Link (Demo, Architecture & Videos):**  
-👉 https://drive.google.com/drive/folders/1gC2z33cFcB1mbJvQ55ID6VIg0lpx1fuY?usp=sharing
+👉 (https://drive.google.com/drive/folders/1M0EwIbWc0KmLEEWap3etWrfUkd7gBMgP?usp=drive_link)
 
 A smart restaurant ordering system that allows users to place food orders using voice commands, powered by Speech‑to‑Text (Whisper), AI intent parsing, and a POS‑integrated backend.
 
@@ -134,5 +134,68 @@ project-root/
 └── database/
     └── schema.sql
 
+🔗 Backend ↔ Frontend Flow
+User records voice
 
+Audio sent to backend
 
+Whisper transcribes audio
+
+AI extracts intent
+
+Menu resolver validates items
+
+Order is created in DB
+
+Response returned to frontend
+
+UI shows order summary
+
+🔌 API Endpoints
+Voice Booking
+POST /api/voice-booking
+
+Health Check
+GET /health
+
+⚙️ Environment Variables
+PORT=5000
+DATABASE_URL=postgresql://user:password@localhost:5432/restaurant
+JWT_SECRET=your_secret_key
+GEMINI_API_KEY=your_api_key
+
+🚀 Quick Start
+Backend Setup
+cd backend
+npm install
+npm run dev
+
+Frontend Setup
+cd frontend
+npm install
+npm run dev
+
+🎯 Key Learnings
+AI output must always be validated
+
+Voice systems require strong backend checks
+
+Database-driven logic prevents failures
+
+Hackathons reward clarity over complexity
+
+👥 Contributors
+Built as part of a Hackathon Team Project
+Focus areas:
+
+Backend architecture
+
+AI & voice integration
+
+Database design
+
+📝 License
+This project was developed for educational and hackathon purposes only.
+
+📌 Final Note
+This project is not about winning — it is about building something correct, scalable, and production‑ready.
